@@ -4,6 +4,8 @@ Purpose: extract reusable design patterns, not clone products.
 
 Research snapshot: **2026-08-10**.
 
+---
+
 ## AutoSRE — Google Cloud Rapid Agent Hackathon, Dynatrace 1st Place
 
 **Developer:** Maksim Silchenko (solo)  
@@ -50,7 +52,11 @@ Sources:
 - https://devpost.com/software/autosre-the-autonomous-on-call-engineer
 - https://github.com/thylinao1/autosre
 
-## HackOverflow — TreeHacks 2026 winner
+---
+
+## HackOverflow — TreeHacks 2026 winner (Fetch.ai multi-agent track; RunPod winner)
+
+**Team:** 4 developers
 
 ### Product
 
@@ -80,9 +86,12 @@ Sources:
 - https://devpost.com/software/hackoverflow-stack-overflow-for-ai-agents-at-hackathons
 - https://github.com/IshaanChamoli/treehacks26
 
+---
+
 ## LORE — GitLab AI Hackathon Grand Prize
 
-**Team:** 2 developers
+**Team:** 2 developers  
+**Overall grand prize:** $15,000
 
 ### Product
 
@@ -101,6 +110,7 @@ Institutional memory for software teams. LORE extracts engineering decisions and
 ### Key lesson
 
 A valuable memory system needs **evolution semantics**:
+
 - When is old memory still valid?
 - When should it be superseded?
 - Who/what changed it?
@@ -111,11 +121,16 @@ Sources:
 - https://devpost.com/software/lore-living-organizational-record-engine
 - https://gitlab.devpost.com/updates/41783-meet-the-winners
 
+---
+
 ## Cassandra — Google Cloud Rapid Agent Hackathon, Arize 1st Place
+
+**Team:** 2 developers  
+**Prize for track 1st:** $5,000
 
 ### Product
 
-Supervisor for other AI agents. It watches traces/behavior, detects failures, evaluates agent behavior, and creates a feedback/improvement loop.
+Supervisor for other AI agents. It watches traces/behavior, detects failures or hallucination-like problems, evaluates agent behavior, and creates a feedback/improvement loop.
 
 ### Relevant ideas
 
@@ -125,15 +140,25 @@ Supervisor for other AI agents. It watches traces/behavior, detects failures, ev
 - The most useful “memory” may be operational evidence rather than conversation.
 
 Source:
-- https://devpost.com/software/cassandra-jilmgy
+https://devpost.com/software/cassandra-jilmgy
+
+---
 
 ## Globot — Gemini 3 Hackathon Grand Prize
 
-Globot is most useful here as a reference for **product presentation, orchestration, and human-in-the-loop decision support** rather than as a direct memory architecture template.
+**Prize:** $50,000 overall grand prize
+
+### Why it is useful as a reference
+
+Globot is more useful to us as a reference for **product presentation, orchestration, and human-in-the-loop decision support** than as a direct memory architecture template.
+
+Devpost later reviewed questions about its code history and confirmed its eligibility; the large initial code snapshot contained significant scaffolding/lockfile/data content and evolved from work created inside the hackathon window.
 
 ### Key lesson
 
-Do not confuse source-code volume with hackathon quality. Judges reward:
+Do not confuse source-code volume with hackathon quality.
+
+Judges reward:
 - legible product value,
 - cohesive workflow,
 - technical evidence,
@@ -142,7 +167,10 @@ Do not confuse source-code volume with hackathon quality. Judges reward:
 
 Sources:
 - https://gemini3.devpost.com/updates
+- https://gemini3.devpost.com/forum_topics/43709-gemini-3-hackathon-update-on-the-eligibility-review
 - https://github.com/Vector897/Globot
+
+---
 
 # Cross-project pattern
 
