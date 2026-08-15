@@ -1,52 +1,106 @@
-# CockroachDB × AWS Agentic Memory Hackathon
+# ContextSeal
 
-Research and decision workspace for the **CockroachDB × AWS Hackathon — Build with Agentic Memory**.
+**Git-aware, validity-gated memory for multi-agent systems.**
 
-## Current status
+ContextSeal anchors agent claims to exact versions of files and sub-file artifacts. When Git, another agent, or an external process changes the underlying evidence, CockroachDB atomically invalidates every directly and transitively dependent memory before retrieval can admit it into another agent's context.
 
-**Phase:** research / architecture selection  
-**Submission deadline:** August 18, 2026 at 5:00 PM EDT (August 19, 2026 at 2:30 AM IST)  
-**Target:** build a submission that is competitive for the overall top three, not merely a functioning demo.
+> Vector search discovers potentially relevant memories. Evidence lineage decides whether they are still allowed to influence an action.
 
-## Challenge in one sentence
+## Hackathon workflow
 
-Build an **agentic application deployed on AWS where CockroachDB is a meaningful persistent memory layer**, and demonstrate that the memory materially changes what the agent can do.
+1. A case-evaluator subagent reads `policies/refund-policy.json#/refund_window_days` at value `30`.
+2. Its conclusion that a 14-day-old damaged order is refundable is anchored to that artifact version.
+3. A policy subagent or remote Git change overwrites the value with `7`.
+4. ContextSeal appends a new artifact version and recursively invalidates the policy claim and case conclusion.
+5. Semantic recall still finds the obsolete conclusion, but the validity gate withholds it.
+6. The root agent re-verifies the new value and publishes replacement claims; historical claims remain replayable.
+7. An unrelated claim anchored to `/currency` remains valid, proving selective invalidation.
 
-## Working principles
+The demo also races two writes with the same expected file hash. Exactly one applies; the other is recorded as `rejected_stale`.
 
-1. One excellent end-to-end workflow beats a broad platform.
-2. CockroachDB memory must be load-bearing, not decorative.
-3. The agent must **observe → retrieve memory → reason → act → verify → persist new memory**.
-4. Sponsor technology should be visible in the core product story and the demo.
-5. Verification, safety, failure handling, and observability are product features.
-6. Design the three-minute demo while designing the architecture.
-7. Scope for a solo developer using AI coding assistance.
+## Architecture
 
-## Candidate product direction
+```text
+Git remote-first preflight
+        |
+        v
+read/write receipts ---- root and subagent identities
+        |
+        v
+artifact -> artifact version -> claim -> derived claim
+        |                          |
+        +---- atomic invalidation -+
+        |
+        v
+CockroachDB relational graph + VECTOR search
+        |
+        +---- Managed MCP read-only audit views
+        |
+        v
+Bedrock claim proposal -> deterministic selector/hash validation
+```
 
-A **durable operational/incident memory agent** is currently the leading direction, but it is not frozen yet.
+CockroachDB stores artifact versions, claims, dependency edges, read receipts, write events, agent lineage, vectors, and historical validity. A serializable transaction performs expected-hash admission, version publication, recursive invalidation, and audit insertion.
 
-The central idea is that an operations agent should remember:
-- prior incidents and symptoms,
-- investigation evidence,
-- fixes attempted,
-- whether those fixes worked,
-- human decisions/overrides,
-- service-specific patterns,
-- confidence and recency of learned knowledge.
+Bedrock may propose a replacement claim from an artifact diff. It cannot establish evidence, change a selector, or decide freshness; deterministic validation does that before persistence.
 
-When a new incident occurs, it should retrieve relevant historical memory, investigate current evidence, recommend or take bounded action, verify the result, and write the outcome back as new memory.
+## Current verification status
 
-See `docs/PROJECT_DIRECTION.md`.
+- TypeScript type-check: passing.
+- Vitest: 7 tests passing.
+- Next.js production build: passing.
+- Local HTTP demo: all six transitions passing.
+- CockroachDB schema and runtime adapter: implemented; live cloud credential run pending.
+- Bedrock Converse adapter: implemented; live AWS credential run pending.
+- Visual browser QA: pending because no browser surface was available in the current desktop session.
 
-## Repository context
+Local mode is labeled `local-demo`; it must not be presented as CockroachDB proof in the submission video.
 
-Start with:
-- `AGENTS.md`
-- `docs/HACKATHON_REQUIREMENTS.md`
-- `docs/JUDGING_STRATEGY.md`
-- `docs/WINNER_RESEARCH.md`
-- `docs/PROJECT_DIRECTION.md`
-- `docs/OPEN_QUESTIONS.md`
+## Run locally
 
-No implementation decisions are considered final until explicitly recorded.
+Requires Node.js 24 or later.
+
+```bash
+npm install
+npm run dev
+npm run typecheck
+npm test
+npm run build
+```
+
+Open `http://localhost:3000`.
+
+## Run with CockroachDB
+
+Copy `.env.example` to `.env.local` and set `DATABASE_URL`.
+
+```bash
+npm run db:migrate
+npm run db:seed
+npm run demo:stress
+npm run dev
+```
+
+Set `CONTEXTSEAL_AUTO_SEED=true` only for a disposable demo database. The Managed MCP server can expose `mcp_memory_validity` and `mcp_agent_file_audit` as read-oriented audit views.
+
+## Run with Bedrock
+
+Provide AWS credentials through the standard AWS SDK credential chain and set:
+
+```text
+AGENT_ENGINE=bedrock
+AWS_REGION=us-east-1
+BEDROCK_MODEL_ID=amazon.nova-lite-v1:0
+```
+
+The re-verification step calls Bedrock and returns real token/latency telemetry. An unverified selector is rejected.
+
+## Git behavior
+
+ContextSeal checks remote identity before worktree status and never runs `git pull` automatically. If remote access fails, it reports `remoteFreshness: unknown` without pretending the repository is current. Git covers committed changes; ContextSeal receipts cover uncommitted root/subagent work.
+
+## Submission deadline
+
+August 18, 2026 at 5:00 PM EDT — August 19, 2026 at 2:30 AM IST.
+
+See [MEMORY_GRAPH_DIRECTION.md](docs/MEMORY_GRAPH_DIRECTION.md), [ARCHITECTURE.md](docs/ARCHITECTURE.md), and [HACKATHON_REQUIREMENTS.md](docs/HACKATHON_REQUIREMENTS.md).

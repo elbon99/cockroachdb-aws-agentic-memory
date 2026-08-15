@@ -1,6 +1,6 @@
 # Research sources
 
-Snapshot assembled 2026-08-10.
+Initial snapshot assembled 2026-08-10. Idea-evaluation sources were added on 2026-08-13.
 
 ## Current hackathon
 
@@ -42,3 +42,15 @@ Winner observations in this repository are a mixture of:
 - explicitly labeled strategic inferences.
 
 Do not treat our derived strategy as an official competition requirement.
+
+## Idea evaluation
+
+The full dated comparison and its additional sources are recorded in:
+
+- [IDEA_EVALUATION_2026-08-13.md](IDEA_EVALUATION_2026-08-13.md)
+- [FILLFLEET_IDEA_EVALUATION_2026-08-13.md](FILLFLEET_IDEA_EVALUATION_2026-08-13.md)
+- [PARALLEL_EVIDENCE_MEMORY_EXPLORATION_2026-08-13.md](PARALLEL_EVIDENCE_MEMORY_EXPLORATION_2026-08-13.md)
+- [AGENT_FILE_CONSISTENCY_EXPLORATION_2026-08-13.md](AGENT_FILE_CONSISTENCY_EXPLORATION_2026-08-13.md)
+- [AGENT_FILE_CONSISTENCY_JUDGE_2026-08-13.md](AGENT_FILE_CONSISTENCY_JUDGE_2026-08-13.md)
+- [HIGH_CONSEQUENCE_WORKFLOW_IDEAS_2026-08-13.md](HIGH_CONSEQUENCE_WORKFLOW_IDEAS_2026-08-13.md)
+- [ATOMIC_MEMORY_RELEASES_EVALUATION_2026-08-14.md](ATOMIC_MEMORY_RELEASES_EVALUATION_2026-08-14.md)
