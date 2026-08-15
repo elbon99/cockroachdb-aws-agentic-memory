@@ -1,135 +1,126 @@
-# Candidate project direction
+# Selected project direction
 
-Status: **candidate, not frozen**
+Status: **superseded design record**
 
-## Working concept
+> The current authoritative direction is [MEMORY_GRAPH_DIRECTION.md](MEMORY_GRAPH_DIRECTION.md): Git-aware, validity-gated memory with selective recursive invalidation. The atomic release work below remains useful prior art and schema context, but it is no longer the submission headline.
 
-### Durable Incident Memory Agent
+Decision date: **2026-08-15**
 
-An operational agent that investigates incidents and builds a verified memory of what actually worked.
+## Working name
 
-Instead of starting every incident from zero, it accumulates durable operational knowledge.
+### ContextSeal
 
-## Problem
+**Atomic, replayable memory releases for AI agent fleets.**
 
-Incident response repeatedly loses context:
+## Product sentence
 
-- telemetry is fragmented,
-- similar incidents recur,
-- important fixes live in Slack/tickets/human memory,
-- an agent may repeat a failed remediation,
-- runbooks age,
-- teams rarely encode the full causal chain from symptom to verified recovery.
+> ContextSeal publishes one coherent, authorized bundle of policies, tools, and knowledge to an agent fleet, proves which memory changed an action, and reconstructs the exact context behind any prior decision.
 
-## Desired behavior
+## Precise user
 
-For a new incident:
+The first user is an enterprise agent-platform engineer operating several customer-support agents. They need to change policies, tool definitions, and approved knowledge without allowing agents to consume a mixture of old and new versions.
 
-1. Observe current symptoms/evidence.
-2. Create durable incident state.
-3. Retrieve semantically similar incidents from CockroachDB.
-4. Retrieve structured outcomes and failed attempts.
-5. Investigate live/current evidence with tools.
-6. Propose a bounded remediation or next diagnostic step.
-7. Require human approval for consequential actions if needed.
-8. Execute.
-9. Verify health/recovery.
-10. Persist:
-   - evidence,
-   - action,
-   - approval/override,
-   - result,
-   - verification,
-   - learned memory,
-   - provenance/confidence.
+## Demonstration workflow
 
-For a later similar incident, prior verified outcomes should materially change the plan.
+The demo uses one damaged-order support case.
 
-## Why CockroachDB is naturally central
+- Release R17 contains a seven-day refund policy. The agent calls `deny_refund` for a fourteen-day-old order.
+- Two R18 candidates based on R17 publish concurrently.
+- CockroachDB permits one expected-base transition and rejects the other as stale.
+- The winning R18 contains the approved thirty-day policy. The same case calls `issue_refund`.
+- The interface displays the exact changed block hash and retrieved evidence that informed the action.
+- The R17 invocation can be reconstructed from its immutable release manifest and evidence receipt.
+- Two identical Bedrock calls under R18 demonstrate cache-write then cache-read telemetry when credentials and model access are configured.
 
-Potentially store together:
+## Core invariant
 
-- relational incident/task state,
-- action/audit records,
-- embeddings for semantic similarity,
-- structured service metadata,
-- verification outcomes,
-- memory provenance,
-- human decisions.
+```text
+An admitted invocation uses exactly one authorized release manifest.
 
-This lets the demo show both **transactional memory and semantic memory** rather than introducing a separate operational DB and vector DB.
+Publishing candidate C succeeds only when:
+active_release_id == C.expected_base_release_id
 
-## Candidate CockroachDB tools
+After one candidate advances R17 to R18, every other R17-based candidate is stale.
+```
 
-Likely strong combination:
+Serializable isolation is necessary but not sufficient. Publication must perform an expected-base compare-and-swap and revalidate it after retryable transaction conflicts.
 
-1. **Distributed Vector Indexing**
-   - retrieve semantically related incidents/memories.
+## CockroachDB role
 
-2. **Managed MCP Server**
-   - expose/query CockroachDB safely as part of agent tooling.
+CockroachDB is the system of record for:
 
-Possible third:
-3. **ccloud CLI**
-   - provisioning/ops/observability demonstration if it is genuinely useful rather than decorative.
+- immutable context blocks and content hashes;
+- block embeddings and authorization metadata;
+- release manifests and dependency edges;
+- approval and supersession state;
+- the active release pointer;
+- invocation inputs, model configuration, selected evidence, action, and request hash;
+- cache-token telemetry and audit events.
 
-Agent Skills may also be useful, but should not be included solely to satisfy tool count.
+### Required CockroachDB tools
 
-## Candidate AWS role
+1. **Distributed Vector Indexing** retrieves authorized task-specific evidence after the stable cache checkpoint.
+2. **CockroachDB Cloud Managed MCP Server** gives a read-oriented auditor agent access to the active release, invocation receipts, and reconstruction evidence.
+3. **ccloud CLI** is optional supporting proof for reproducible provisioning or operational preflight; it is not counted if only shown in setup notes.
 
-Keep AWS simple and load-bearing.
+Writes use a scoped application service and parameterized SQL transactions. The model does not receive unrestricted write access.
 
-Possible architecture:
+## AWS role
 
-- Bedrock for model reasoning **or**
-- ECS/Lambda for agent runtime
-- S3 for large investigation artifacts where useful
+- **Amazon Bedrock Converse API** performs the bounded support decision and exposes `cacheWriteInputTokens` and `cacheReadInputTokens`.
+- **AWS Lambda/API Gateway** is the intended deployment boundary for the API if schedule permits; the correctness boundary remains the synchronous CockroachDB transaction and admission check.
+- **CloudWatch** is optional for latency, publication failures, and cache telemetry.
 
-Do not use three AWS services if one or two make a cleaner product.
+The application has a clearly labeled deterministic demo engine so development and recorded fallback behavior remain reproducible. It must never present fallback counters as real Bedrock telemetry.
 
-## Demo hypothesis
+## Scope frozen for the vertical slice
 
-Demonstrate two related incidents.
+Build only:
 
-### Incident A
-Agent has no relevant prior memory:
-- investigates,
-- takes/requests action,
-- verifies recovery,
-- writes verified memory.
+1. immutable block and manifest schema;
+2. expected-base atomic publication;
+3. one same-input action change;
+4. authorized hybrid/vector evidence retrieval;
+5. exact request reconstruction;
+6. one real Bedrock cache write/read path;
+7. one useful MCP auditor query;
+8. a single-screen guided demo;
+9. concurrency, causality, and reconstruction tests.
 
-### Incident B
-Similar symptom occurs later:
-- agent retrieves Incident A,
-- recognizes a known failed/successful pattern,
-- avoids redundant diagnostics or failed remediation,
-- reaches a safe proposal faster,
-- verifies again,
-- updates memory.
+## Explicitly deferred
 
-This creates an extremely visible before/after story for “agentic memory.”
+- generic prompt or memory registry;
+- arbitrary workflow builder;
+- live revocation of in-flight inference;
+- provider-side cache deletion;
+- EventBridge as a correctness mechanism;
+- multi-region claims without proof;
+- elaborate approval UI;
+- agent acknowledgements and presence;
+- many model providers;
+- general enterprise connectors;
+- chat-history storage;
+- automatic memory extraction from transcripts.
 
-## Differentiation from AutoSRE
+## Falsification gates
 
-Do not build “AutoSRE on AWS with CockroachDB.”
+The prototype fails its thesis if any of the following occurs:
 
-AutoSRE's winning centerpiece was governed autonomous remediation.
+1. More than one candidate based on R17 becomes a valid successor.
+2. A consumer observes a manifest containing blocks from different releases.
+3. The same-input behavior change cannot be traced to one approved block/evidence change.
+4. A prior invocation request cannot be reconstructed byte-for-byte.
+5. Vector retrieval does not affect the demonstrated action or is not authorization-filtered.
+6. The Bedrock cache proof cannot produce real provider telemetry; in that case caching must be removed from the headline.
 
-Our centerpiece should be:
+## Competitive boundary
 
-> **verified durable learning across incidents.**
+Do not claim that prompt versioning, release aliases, rollback, or context bundles are new. LangSmith, LaunchDarkly, MLflow, Braintrust, Bedrock Prompt Management, and OPA already cover large portions of that surface.
 
-Incident response is the domain; memory evolution is the product.
+The narrow claim to demonstrate is:
 
-## Must-prove questions
+> One database transaction binds the active release, its exact immutable dependencies, the authorized dynamic evidence, and the resulting agent action into a replayable receipt while preventing stale concurrent publication.
 
-Before implementation is frozen:
+## Evaluation reference
 
-1. What exact evidence source will produce incidents?
-2. What real tools can the agent safely use?
-3. What memory schema makes CockroachDB indispensable?
-4. How do memories become verified vs unverified?
-5. How does memory age or become superseded?
-6. What does semantic retrieval add beyond a SQL filter?
-7. What is the one action the agent can perform that makes this agentic rather than RAG?
-8. What is the smallest deterministic demo scenario?
+See [ATOMIC_MEMORY_RELEASES_EVALUATION_2026-08-14.md](ATOMIC_MEMORY_RELEASES_EVALUATION_2026-08-14.md) for the independent Idea-mode evaluation.

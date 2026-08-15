@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evaluate Hackathon Candidate"
+  short_description: "Judge ideas and prototypes independently"
+  default_prompt: "Use $evaluate-hackathon-prototype to independently assess this hackathon idea or prototype."
