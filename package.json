@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "description": "Atomic, replayable memory releases for AI agent fleets.",
+  "description": "Evidence-accountable memory for AI agents, backed by immutable tool receipts.",
   "license": "MIT",
   "engines": {
     "node": ">=24.0.0"
@@ -17,23 +17,24 @@
     "test:watch": "vitest",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "demo:stress": "tsx scripts/stress.ts"
+    "demo:stress": "tsx scripts/stress.ts",
+    "observe:file": "tsx scripts/observe-file.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "latest",
-    "next": "latest",
-    "pg": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "zod": "latest"
+    "@aws-sdk/client-bedrock-runtime": "3.1111.0",
+    "next": "16.3.1",
+    "pg": "8.23.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/pg": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "tsx": "latest",
-    "typescript": "latest",
-    "vitest": "latest"
+    "@types/node": "26.2.0",
+    "@types/pg": "8.21.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
   }
 }

@@ -1,0 +1,4 @@
+{
+  "escalation_team": "support-ops",
+  "refunds_require_review_above_usd": 500
+}

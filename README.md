@@ -1,64 +1,36 @@
 # ContextSeal
 
-**Git-aware, validity-gated memory for multi-agent systems.**
+**Memory that proves why it is still true.**
 
-ContextSeal anchors agent claims to exact versions of files and sub-file artifacts. When Git, another agent, or an external process changes the underlying evidence, CockroachDB atomically invalidates every directly and transitively dependent memory before retrieval can admit it into another agent's context.
+ContextSeal converts file, HTTP, and SQL tool results into immutable receipts. Agent memories cite exact response fragments, enter a human review queue, and are automatically withheld when those fragments change. A consequential action can execute only from an approved, current memory.
 
-> Vector search discovers potentially relevant memories. Evidence lineage decides whether they are still allowed to influence an action.
+## Three-minute demo
 
-## Hackathon workflow
+1. Observe a 30-day refund policy through the registered GitHub Contents adapter and a 14-day damaged order through a named SQL query.
+2. Amazon Bedrock proposes “eligible”; a human approves it; the bounded refund action executes.
+3. Change the upstream policy to seven days and refresh the source.
+4. CockroachDB atomically marks the dependent memory stale. Vector recall still discovers it, but the validity gate withholds it and blocks reuse.
+5. Bedrock proposes “ineligible” from the new receipt, a human approves it, and the bounded denial action executes.
+6. A read-only CockroachDB Managed MCP auditor explains the receipts, review, invalidation, and action.
 
-1. A case-evaluator subagent reads `policies/refund-policy.json#/refund_window_days` at value `30`.
-2. Its conclusion that a 14-day-old damaged order is refundable is anchored to that artifact version.
-3. A policy subagent or remote Git change overwrites the value with `7`.
-4. ContextSeal appends a new artifact version and recursively invalidates the policy claim and case conclusion.
-5. Semantic recall still finds the obsolete conclusion, but the validity gate withholds it.
-6. The root agent re-verifies the new value and publishes replacement claims; historical claims remain replayable.
-7. An unrelated claim anchored to `/currency` remains valid, proving selective invalidation.
+The browser includes a deterministic local fallback for reproducibility. It is visibly labeled `local-demo` and is not the sponsor proof.
 
-The demo also races two writes with the same expected file hash. Exactly one applies; the other is recorded as `rejected_stale`.
+## Why the sponsors are essential
 
-## Architecture
+- **CockroachDB Cloud** is the serializable system of record for observations, selected fragments, memory dependencies, reviews, and action receipts. Its distributed vector index discovers semantically relevant claims; relational validity gates decide whether they may influence an action. Managed MCP exposes read-only audit views.
+- **AWS Bedrock** uses Nova Lite to propose bounded claims from receipts and Titan Text Embeddings V2 to generate normalized 256-dimensional vectors. Amplify hosts the Next.js application with an SSR compute role; credentials stay server-side.
 
-```text
-Git remote-first preflight
-        |
-        v
-read/write receipts ---- root and subagent identities
-        |
-        v
-artifact -> artifact version -> claim -> derived claim
-        |                          |
-        +---- atomic invalidation -+
-        |
-        v
-CockroachDB relational graph + VECTOR search
-        |
-        +---- Managed MCP read-only audit views
-        |
-        v
-Bedrock claim proposal -> deterministic selector/hash validation
-```
+## Explicit tool adapters
 
-CockroachDB stores artifact versions, claims, dependency edges, read receipts, write events, agent lineage, vectors, and historical validity. A serializable transaction performs expected-hash admission, version publication, recursive invalidation, and audit insertion.
+- `observe_http_source`: registered GitHub owner/repo/path only, GET-only, redirect-disabled, five-second timeout, one-megabyte limit.
+- `observe_sql_query`: named, parameterized, read-only `get_order` query only; arbitrary SQL is impossible.
+- `observe_file`: path constrained beneath `CONTEXTSEAL_FILE_ROOT`; secret-looking files are rejected; hosted ingestion requires a private bearer token.
 
-Bedrock may propose a replacement claim from an artifact diff. It cannot establish evidence, change a selector, or decide freshness; deterministic validation does that before persistence.
+All adapters emit the same observation and fragment contract. Whole responses are hashed, but selective invalidation compares only fragments a memory actually cited.
 
-## Current verification status
+## Run
 
-- TypeScript type-check: passing.
-- Vitest: 7 tests passing.
-- Next.js production build: passing.
-- Local HTTP demo: all six transitions passing.
-- CockroachDB schema and runtime adapter: implemented; live cloud credential run pending.
-- Bedrock Converse adapter: implemented; live AWS credential run pending.
-- Visual browser QA: pending because no browser surface was available in the current desktop session.
-
-Local mode is labeled `local-demo`; it must not be presented as CockroachDB proof in the submission video.
-
-## Run locally
-
-Requires Node.js 24 or later.
+Node 24 or later is required.
 
 ```bash
 npm install
@@ -68,11 +40,7 @@ npm test
 npm run build
 ```
 
-Open `http://localhost:3000`.
-
-## Run with CockroachDB
-
-Copy `.env.example` to `.env.local` and set `DATABASE_URL`.
+For sponsor mode, copy `.env.example` to `.env.local`, provide `DATABASE_URL`, migrate, and enable Bedrock:
 
 ```bash
 npm run db:migrate
@@ -81,26 +49,12 @@ npm run demo:stress
 npm run dev
 ```
 
-Set `CONTEXTSEAL_AUTO_SEED=true` only for a disposable demo database. The Managed MCP server can expose `mcp_memory_validity` and `mcp_agent_file_audit` as read-oriented audit views.
+Set `AGENT_ENGINE=bedrock`. The standard AWS SDK credential chain supplies credentials locally; Amplify should use an SSR compute role with only `bedrock:InvokeModel` access to the configured Nova and Titan model ARNs. Do not expose database or AWS credentials to the browser.
 
-## Run with Bedrock
+## Audit surfaces
 
-Provide AWS credentials through the standard AWS SDK credential chain and set:
+- `mcp_receipt_audit`: source, version, response hash, selected fragment hashes, run, and step.
+- `mcp_memory_decisions`: proposal provenance, review decision, validity, invalidation, and authorized action.
 
-```text
-AGENT_ENGINE=bedrock
-AWS_REGION=us-east-1
-BEDROCK_MODEL_ID=amazon.nova-lite-v1:0
-```
-
-The re-verification step calls Bedrock and returns real token/latency telemetry. An unverified selector is rejected.
-
-## Git behavior
-
-ContextSeal checks remote identity before worktree status and never runs `git pull` automatically. If remote access fails, it reports `remoteFreshness: unknown` without pretending the repository is current. Git covers committed changes; ContextSeal receipts cover uncommitted root/subagent work.
-
-## Submission deadline
-
-August 18, 2026 at 5:00 PM EDT — August 19, 2026 at 2:30 AM IST.
-
-See [MEMORY_GRAPH_DIRECTION.md](docs/MEMORY_GRAPH_DIRECTION.md), [ARCHITECTURE.md](docs/ARCHITECTURE.md), and [HACKATHON_REQUIREMENTS.md](docs/HACKATHON_REQUIREMENTS.md).
+See [TOOL_RECEIPT_ARCHITECTURE.md](docs/TOOL_RECEIPT_ARCHITECTURE.md) for the active contract. Earlier research files are retained as decision history.
+The exact read-only auditor setup and demo prompt are in [MCP_AUDITOR.md](docs/MCP_AUDITOR.md).

@@ -1,38 +1,14 @@
-import {
-  createMemoryGraphSeed,
-  GRAPH_POLICY_PATH,
-  GRAPH_REPOSITORY_ID,
-  GRAPH_TENANT_ID,
-} from "../src/lib/memory-graph/fixtures";
-import { CockroachGraphStore } from "../src/lib/memory-graph/cockroach-store";
+import { CockroachReceiptStore } from "../src/lib/receipts/cockroach-store";
 
 try { process.loadEnvFile(".env.local"); } catch { /* Environment variables may be injected. */ }
-
-const databaseUrl = process.env.DATABASE_URL?.trim();
-if (!databaseUrl) throw new Error("DATABASE_URL is required");
-
-const store = new CockroachGraphStore(databaseUrl);
-await store.reset(createMemoryGraphSeed());
-const snapshot = await store.snapshot(GRAPH_REPOSITORY_ID);
-const file = snapshot.files[0];
-if (!file) throw new Error("Demo file was not seeded");
-
-const attempts = await Promise.all(
-  Array.from({ length: 25 }, (_, index) =>
-    store.applyWrite({
-      tenantId: GRAPH_TENANT_ID,
-      repositoryId: GRAPH_REPOSITORY_ID,
-      agentId: index % 2 === 0 ? "agent-policy-subagent" : "agent-case-subagent",
-      path: GRAPH_POLICY_PATH,
-      expectedFileHash: file.contentHash,
-      content: JSON.stringify({ refund_window_days: 7 + index, currency: "USD" }, null, 2),
-      summary: `Concurrent policy candidate ${index + 1}`,
-      sourceRevision: `stress-candidate-${index + 1}`,
-    }),
-  ),
-);
-
-const applied = attempts.filter((item) => item.event.outcome === "applied");
-const rejected = attempts.filter((item) => item.event.outcome === "rejected_stale");
-console.log(JSON.stringify({ attempted: attempts.length, applied: applied.length, rejected: rejected.length }, null, 2));
-if (applied.length !== 1) throw new Error(`Expected one winner, observed ${applied.length}`);
+const url=process.env.DATABASE_URL?.trim(); if(!url) throw new Error("DATABASE_URL is required");
+const store=new CockroachReceiptStore(url); await store.reset();
+const first=await store.observe({sourceId:"policy",toolName:"observe_http_source",request:{},response:{days:30},sourceVersion:"v1",fragments:[{selector:"/days",value:30}],runId:"stress-seed",step:1});
+const fragment=(await store.snapshot()).fragments.find((item)=>item.observationId===first.observationId)!;
+const memory=await store.propose({statement:"A fourteen day old order is eligible for a refund.",rationale:"14 is within 30",fragmentIds:[fragment.id],proposedBy:"deterministic-demo"});
+await store.review(memory.id,"approved","stress fixture");
+await Promise.all(Array.from({length:25},(_,index)=>store.observe({sourceId:"policy",toolName:"observe_http_source",request:{worker:index},response:{days:7},sourceVersion:`v2-worker-${index}`,fragments:[{selector:"/days",value:7}],runId:"stress",step:index})));
+const snapshot=await store.snapshot();
+const stale=snapshot.memories.find((item)=>item.id===memory.id)?.status;
+console.log(JSON.stringify({concurrentRefreshes:25,observations:snapshot.observations.length,memoryStatus:stale},null,2));
+if(stale!=="stale") throw new Error("Expected dependent memory to be stale");

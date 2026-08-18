@@ -1,6 +1,8 @@
 # ContextSeal validity-aware memory graph
 
-Status: **selected, implemented vertical slice**
+> **Superseded on 2026-08-17.** The active submission contract is [TOOL_RECEIPT_ARCHITECTURE.md](TOOL_RECEIPT_ARCHITECTURE.md). The artifact-specific graph below remains as design history; the product now generalizes artifacts into immutable file, HTTP, and SQL tool receipts.
+
+Status: **archived artifact-specific prototype**
 
 Decision date: **2026-08-15**
 
