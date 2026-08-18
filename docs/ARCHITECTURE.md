@@ -1,8 +1,8 @@
 # ContextSeal architecture
 
-Status: **superseded release-layer contract**
+Status: **archived release-layer contract**
 
-> The active implementation contract is [MEMORY_GRAPH_DIRECTION.md](MEMORY_GRAPH_DIRECTION.md). The release/compiler architecture below is retained as the historical layer from which the graph implementation evolved.
+> The active implementation contract is [TOOL_RECEIPT_ARCHITECTURE.md](TOOL_RECEIPT_ARCHITECTURE.md). The release/compiler architecture below is retained as historical research.
 
 Last updated: **2026-08-15**
 
